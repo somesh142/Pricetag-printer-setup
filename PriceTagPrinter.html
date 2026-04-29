@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Price Tag Printer — Sri Murugan Trading</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --brand: #B91C1C;
+  --brand-dark: #7f1d1d;
+  --brand-light: #fee2e2;
+  --brand-mid: #ef4444;
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #242424;
+  --bg4: #2e2e2e;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f0;
+  --text2: #a0a0a0;
+  --text3: #606060;
+  --success: #22c55e;
+  --success-bg: rgba(34,197,94,0.12);
+  --warn: #f59e0b;
+  --warn-bg: rgba(245,158,11,0.12);
+  --danger: #ef4444;
+  --danger-bg: rgba(239,68,68,0.12);
+  --info: #60a5fa;
+  --info-bg: rgba(96,165,250,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SIDEBAR LAYOUT ── */
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  width: 36px; height: 36px;
+  background: var(--brand);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.logo-name { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.logo-sub { font-size: 10px; color: var(--text3); margin-top: 1px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+.nav { padding: 10px 10px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--brand-dark); color: #fff; border-color: var(--brand); }
+.nav-item.active .nav-icon { color: #fca5a5; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--brand);
+  color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  min-width: 18px; text-align: center;
+}
+
+.sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+}
+
+/* ── MAIN CONTENT ── */
+.content {
+  margin-left: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 15px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.page { padding: 28px; display: none; }
+.page.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+/* ── STEP INDICATOR ── */
+.steps {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 24px;
+}
+.step {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text3);
+}
+.step.done { color: var(--success); }
+.step.active { color: var(--text); }
+.step-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.step.done .step-num { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+.step.active .step-num { background: var(--brand); border-color: var(--brand); color: #fff; }
+.step-line { flex: 1; height: 1px; background: var(--border2); margin: 0 10px; min-width: 20px; }
+.step-line.done { background: var(--success); }
+
+/* ── FORMS ── */
+label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; letter-spacing: 0.03em; }
+input[type=text], input[type=number], select, textarea {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  transition: border 0.15s, background 0.15s;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  border-color: var(--brand);
+  background: var(--bg4);
+}
+select option { background: var(--bg3); }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg4);
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+}
+input[type=color] {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-xs);
+  padding: 2px;
+  background: var(--bg3);
+  cursor: pointer;
+}
+input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--brand); cursor: pointer; }
+input[type=file] { font-size: 12px; color: var(--text2); background: transparent; border: none; padding: 0; }
+
+.field { margin-bottom: 12px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.inline-row { display: flex; gap: 8px; align-items: flex-end; }
+.inline-row > * { flex: 1; }
+.inline-row > .btn { flex: 0; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text);
+  font-family: inherit;
+  transition: all 0.12s;
+  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--bg4); border-color: var(--border2); }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-mid); border-color: var(--brand-mid); }
+.btn-success { background: var(--success); border-color: var(--success); color: #fff; font-size: 14px; padding: 10px 22px; }
+.btn-success:hover { background: #16a34a; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--text2); }
+.btn-ghost:hover { background: var(--bg3); color: var(--text); }
+.btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.25); background: transparent; }
+.btn-danger:hover { background: var(--danger-bg); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg3);
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--brand); background: rgba(185,28,28,0.06); }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-icon { font-size: 32px; margin-bottom: 10px; }
+.upload-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--text3); }
+
+/* ── MAPPING TABLE ── */
+.map-table { width: 100%; border-collapse: collapse; }
+.map-table td { padding: 7px 8px; font-size: 13px; vertical-align: middle; }
+.map-table td:first-child { color: var(--text2); font-weight: 600; font-size: 12px; width: 130px; }
+.map-table tr { border-bottom: 1px solid var(--border); }
+.map-table tr:last-child { border-bottom: none; }
+
+/* ── SEARCH BOX ── */
+.search-wrap { position: relative; }
+.search-wrap input { padding-left: 36px; font-size: 14px; font-weight: 500; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; pointer-events: none; }
+.search-results {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  display: none;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sr-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  gap: 12px;
+}
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: var(--bg3); }
+.sr-name { font-size: 13px; font-weight: 600; }
+.sr-sku { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.sr-price { font-size: 14px; font-weight: 700; color: var(--info); white-space: nowrap; }
+
+/* ── QUEUE ── */
+.queue-wrap {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.q-head {
+  display: flex; align-items: center;
+  padding: 8px 14px;
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  background: var(--bg4);
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.q-head .qh-cb { width: 20px; flex-shrink: 0; }
+.q-head .qh-name { flex: 1; }
+.q-head .qh-price { width: 80px; text-align: right; }
+.q-head .qh-rm { width: 24px; }
+
+.q-item {
+  display: flex; align-items: center;
+  padding: 9px 14px;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.q-item:last-child { border-bottom: none; }
+.q-item:hover { background: var(--bg4); }
+.q-cb { width: 20px; flex-shrink: 0; }
+.q-name { flex: 1; }
+.q-name .n { font-size: 13px; font-weight: 600; }
+.q-name .s { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+.q-price { width: 80px; text-align: right; font-size: 13px; font-weight: 700; color: var(--info); }
+.q-rm { width: 24px; display: flex; justify-content: center; }
+.rm-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 16px; line-height: 1; padding: 0; transition: color 0.1s; }
+.rm-btn:hover { color: var(--danger); }
+.empty-q { padding: 40px 20px; text-align: center; color: var(--text3); font-size: 13px; }
+
+/* ── FEEDBACK ── */
+.fb { font-size: 12px; font-weight: 600; min-height: 18px; margin-top: 6px; }
+.fb-ok { color: var(--success); }
+.fb-warn { color: var(--warn); }
+.fb-err { color: var(--danger); }
+.fb-info { color: var(--info); }
+
+/* ── STAT CARDS ── */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.stat-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.stat-val { font-size: 24px; font-weight: 800; color: var(--text); }
+.stat-val.brand { color: var(--brand); }
+.stat-val.success { color: var(--success); }
+.stat-val.info { color: var(--info); }
+
+/* ── TAG DESIGNER ── */
+.designer-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+.design-controls { }
+.design-preview-wrap { position: sticky; top: 80px; }
+.design-preview-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; text-align: center; }
+
+.tag-preview-outer {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px;
+}
+.tag-preview-container {
+  width: 100%;
+  max-width: 280px;
+  overflow: hidden;
+}
+#tag-preview {
+  width: 100%;
+  font-family: monospace;
+  transition: all 0.2s;
+}
+
+/* toggle switch */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+.toggle-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.toggle {
+  position: relative; width: 36px; height: 20px;
+  background: var(--bg4); border-radius: 10px;
+  cursor: pointer; border: 1px solid var(--border2);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--brand); border-color: var(--brand); }
+.toggle::after {
+  content: ''; position: absolute;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text3); top: 2px; left: 2px;
+  transition: all 0.2s;
+}
+.toggle.on::after { background: #fff; transform: translateX(16px); }
+
+/* color swatch row */
+.swatch-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.swatch {
+  width: 26px; height: 26px; border-radius: 6px;
+  cursor: pointer; border: 2px solid transparent;
+  transition: transform 0.1s;
+}
+.swatch:hover { transform: scale(1.15); }
+.swatch.picked { border-color: #fff; }
+
+/* template pills */
+.template-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.tpill {
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  transition: all 0.15s;
+}
+.tpill:hover { background: var(--bg4); color: var(--text); }
+.tpill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+/* section separator in controls */
+.ctrl-section { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.ctrl-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.ctrl-section-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-val { font-size: 12px; font-weight: 700; color: var(--brand); min-width: 30px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+/* ── ALERT ── */
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500;
+  line-height: 1.6;
+  display: flex; align-items: flex-start; gap: 8px;
+  margin-top: 12px;
+}
+.alert-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(245,158,11,0.25); }
+.alert-info { background: var(--info-bg); color: var(--info); border: 1px solid rgba(96,165,250,0.2); }
+.alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+
+/* ── PRINT PROGRESS OVERLAY ── */
+.print-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.85);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 20px;
+}
+.print-overlay.show { display: flex; }
+.print-overlay-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 32px 40px;
+  text-align: center;
+  min-width: 300px;
+}
+.print-overlay-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.print-overlay-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.progress-bar-wrap {
+  background: var(--bg4);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.print-progress-text { font-size: 13px; font-weight: 700; color: var(--brand); }
+.print-cancel-btn {
+  margin-top: 16px;
+  padding: 7px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.print-cancel-btn:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+/* ========================= PRINT ========================= */
+@media print {
+  body > * { display: none !important; }
+  #print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+  .price-tag {
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  .price-tag:last-child { page-break-after: auto; }
+}
+#print-area { display: none; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🏷</div>
+    <div class="logo-name">Price Tag Printer</div>
+    <div class="logo-sub">Sri Murugan Trading</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPage('setup')" id="nav-setup">
+      <span class="nav-icon">📂</span> Setup
+    </div>
+    <div class="nav-item" onclick="showPage('scan')" id="nav-scan">
+      <span class="nav-icon">📷</span> Scan & Queue
+      <span class="nav-badge" id="nb-queue">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('designer')" id="nav-designer">
+      <span class="nav-icon">🎨</span> Tag Designer
+    </div>
+    <div class="nav-item" onclick="showPage('print')" id="nav-print">
+      <span class="nav-icon">🖨</span> Print
+    </div>
+  </nav>
+  <div class="sidebar-footer">Offline · No internet needed</div>
+</aside>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+
+<div class="topbar">
+  <div class="topbar-title" id="topbar-title">Setup — Upload Inventory</div>
+  <div class="topbar-right">
+    <span id="topbar-status" style="font-size:12px;color:var(--text3);"></span>
+    <button class="btn btn-sm btn-primary" onclick="showPage('print')" id="print-quick-btn" style="display:none;">🖨 Print Selected</button>
+  </div>
+</div>
+
+<!-- ══ PAGE: SETUP ══ -->
+<div class="page active" id="page-setup">
+  <div class="steps" id="step-indicator">
+    <div class="step active" id="s1"><div class="step-num">1</div> Upload File</div>
+    <div class="step-line" id="sl1"></div>
+    <div class="step" id="s2"><div class="step-num">2</div> Map Columns</div>
+    <div class="step-line" id="sl2"></div>
+    <div class="step" id="s3"><div class="step-num">3</div> Select Outlet</div>
+    <div class="step-line" id="sl3"></div>
+    <div class="step" id="s4"><div class="step-num">4</div> Ready</div>
+  </div>
+
+  <!-- Upload -->
+  <div class="card" id="card-upload">
+    <div class="card-title"><span class="dot"></span> Upload Inventory File</div>
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".csv,.xlsx,.xls" />
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Drop your Cin7 export here</div>
+      <div class="upload-sub">CSV or Excel (.xlsx) — export from Inventory → Products → Export → Inventory List</div>
+    </div>
+    <div id="file-status" class="fb" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Column Mapping -->
+  <div class="card" id="card-mapping" style="display:none;">
+    <div class="card-title"><span class="dot"></span> Map Columns</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">We auto-detected your columns. Check they're correct and adjust if needed.</p>
+    <table class="map-table">
+      <tr><td>Product Name *</td><td><select id="col-name"></select></td></tr>
+      <tr><td>SKU *</td><td><select id="col-sku"></select></td></tr>
+      <tr><td>Barcode 1</td><td><select id="col-barcode"></select></td></tr>
+      <tr><td>Barcode 2</td><td><select id="col-barcode2"><option value="">— Not in file —</option></select></td></tr>
+      <tr><td>Barcode 3</td><td><select id="col-barcode3"><option value="">— Not in file —</option></select></td></tr>
+      <tr><td>Barcode 4</td><td><select id="col-barcode4"><option value="">— Not in file —</option></select></td></tr>
+      <tr><td>Selling Price *</td><td><select id="col-price"></select></td></tr>
+      <tr><td>Outlet / Location</td><td><select id="col-location"><option value="">— Not in this file —</option></select></td></tr>
+    </table>
+    <div style="margin-top:14px;" class="btn-row">
+      <button class="btn btn-primary" onclick="confirmMapping()">✓ Confirm &amp; Load</button>
+      <span id="map-status" class="fb"></span>
+    </div>
+  </div>
+
+  <!-- Outlet -->
+  <div class="card" id="card-outlet" style="display:none;">
+    <div class="card-title"><span class="dot"></span> Select Outlet / Price Tier</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">In Cin7, each store uses a Price Tier. Select the outlet or price tier column for this store.</p>
+    <div class="field">
+      <label>Outlet / Location</label>
+      <select id="outlet-select" onchange="filterByOutlet()" style="max-width:320px;"></select>
+    </div>
+    <div id="outlet-info" class="fb fb-info"></div>
+  </div>
+
+  <!-- Ready -->
+  <div class="card" id="card-ready" style="display:none;background:var(--success-bg);border-color:rgba(34,197,94,0.3);">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="font-size:36px;">✅</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--success);margin-bottom:4px;">Inventory loaded successfully!</div>
+        <div id="ready-info" style="font-size:13px;color:var(--text2);"></div>
+      </div>
+      <button class="btn btn-success" style="margin-left:auto;" onclick="showPage('scan')">Go to Scanner →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: SCAN ══ -->
+<div class="page" id="page-scan">
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Products Loaded</div>
+      <div class="stat-val info" id="st-loaded">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">In Queue</div>
+      <div class="stat-val brand" id="st-queue">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Selected to Print</div>
+      <div class="stat-val success" id="st-selected">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Scan Barcode or Search by Name</div>
+    <div class="inline-row">
+      <div class="search-wrap" style="flex:1;">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="scan-input" placeholder="Scan barcode or type product name…" autocomplete="off" oninput="onScanInput()" onkeydown="onScanKey(event)" />
+      </div>
+      <button class="btn btn-primary" onclick="addBySearch()">Add</button>
+    </div>
+    <div id="scan-feedback" class="fb"></div>
+    <div id="search-results" class="search-results"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:10px;">
+      <span class="dot"></span> Print Queue
+    </div>
+    <div class="btn-row" style="margin-bottom:12px;">
+      <button class="btn btn-sm" onclick="selectAll()">☑ All</button>
+      <button class="btn btn-sm" onclick="deselectAll()">☐ None</button>
+      <button class="btn btn-sm btn-danger" onclick="removeSelected()">Remove selected</button>
+      <button class="btn btn-sm btn-danger" onclick="clearQueue()">Clear all</button>
+    </div>
+    <div class="q-head">
+      <div class="qh-cb"></div>
+      <div class="qh-name">Product</div>
+      <div class="qh-price">Price</div>
+      <div class="qh-rm"></div>
+    </div>
+    <div class="queue-wrap" id="queue-list">
+      <div class="empty-q">No products yet — scan a barcode or search by name above</div>
+    </div>
+
+    <div class="alert alert-warn" style="margin-top:14px;" id="no-outlet-warn" style="display:none;">
+      ⚠ No inventory loaded. Go to Setup first to upload your Cin7 file.
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: DESIGNER ══ -->
+<div class="page" id="page-designer">
+  <div class="designer-layout">
+
+    <!-- Controls -->
+    <div class="design-controls">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Quick Templates</div>
+        <div class="template-pills">
+          <div class="tpill active" onclick="applyTemplate('classic')">Classic</div>
+          <div class="tpill" onclick="applyTemplate('bold')">Bold Price</div>
+          <div class="tpill" onclick="applyTemplate('minimal')">Minimal</div>
+          <div class="tpill" onclick="applyTemplate('dark')">Dark</div>
+          <div class="tpill" onclick="applyTemplate('elegant')">Elegant</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Layout &amp; Content</div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">What to show on tag</div>
+          <div class="toggle-row"><span class="toggle-label">Store Name</span><div class="toggle on" id="tog-store" onclick="toggleOpt('store')"></div></div>
+          <div class="toggle-row"><span class="toggle-label">Product Name</span><div class="toggle on" id="tog-name" onclick="toggleOpt('name')"></div></div>
+          <div class="toggle-row"><span class="toggle-label">SKU / Barcode</span><div class="toggle on" id="tog-sku" onclick="toggleOpt('sku')"></div></div>
+          <div class="toggle-row"><span class="toggle-label">Price Label ("PRICE")</span><div class="toggle on" id="tog-label" onclick="toggleOpt('label')"></div></div>
+          <div class="toggle-row"><span class="toggle-label">Date Printed</span><div class="toggle" id="tog-date" onclick="toggleOpt('date')"></div></div>
+          <div class="toggle-row"><span class="toggle-label">Cut Line</span><div class="toggle on" id="tog-cut" onclick="toggleOpt('cut')"></div></div>
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Tag Size (mm width)</div>
+          <div class="slider-row">
+            <input type="range" min="50" max="110" value="76" id="sl-width" oninput="updatePreview()">
+            <span class="slider-val" id="sv-width">76</span>
+          </div>
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Store Name on Tag</div>
+          <input type="text" id="inp-store" value="Sri Murugan Trading" oninput="updatePreview()" />
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Price Size</div>
+          <select id="sl-price-size" oninput="onPriceSizeChange()" onchange="onPriceSizeChange()">
+            <option value="30">Small — 2x wide bold</option>
+            <option value="36">Medium — 2x wide+tall bold</option>
+            <option value="44">Large — 3x wide+tall bold</option>
+            <option value="52" selected>Extra Large — 4x wide+tall bold (biggest)</option>
+          </select>
+          <input type="hidden" id="sv-price-size" value="36">
+          <div style="font-size:11px;color:var(--text3);margin-top:5px;" id="price-size-hint">2x wide + 2x tall — clear and readable</div>
+
+          <div class="ctrl-section-title" style="margin-top:14px;">Product Name Size</div>
+          <select id="sl-name-size" oninput="onNameSizeChange()" onchange="onNameSizeChange()">
+            <option value="11">Small — normal text</option>
+            <option value="13" selected>Medium — bold ★ recommended</option>
+            <option value="16">Large — bold + 2x tall</option>
+            <option value="19">Extra Large — bold + 2x wide+tall</option>
+          </select>
+          <input type="hidden" id="sv-name-size" value="13">
+          <div style="font-size:11px;color:var(--text3);margin-top:5px;" id="name-size-hint">Bold — stands out clearly</div>
+
+          <div class="alert alert-info" style="margin-top:10px;font-size:11px;">
+            💡 Thermal receipt printers have 4 fixed text sizes — not unlimited like a regular printer. These options map to what your Epson TM-T82X actually supports.
+          </div>
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Colours</div>
+          <div class="row2" style="gap:10px;">
+            <div class="field">
+              <label>Background</label>
+              <div class="swatch-row">
+                <div class="swatch picked" style="background:#ffffff;" onclick="setColor('bg','#ffffff',this)"></div>
+                <div class="swatch" style="background:#fff8f0;" onclick="setColor('bg','#fff8f0',this)"></div>
+                <div class="swatch" style="background:#f0f0f0;" onclick="setColor('bg','#f0f0f0',this)"></div>
+                <div class="swatch" style="background:#1a1a1a;border:1px solid #444;" onclick="setColor('bg','#1a1a1a',this)"></div>
+                <div class="swatch" style="background:#0f1e3a;" onclick="setColor('bg','#0f1e3a',this)"></div>
+                <input type="color" id="cp-bg" value="#ffffff" oninput="updatePreview()" title="Custom" style="width:28px;height:28px;" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Price Colour</label>
+              <div class="swatch-row">
+                <div class="swatch picked" style="background:#000000;" onclick="setColor('price','#000000',this)"></div>
+                <div class="swatch" style="background:#b91c1c;" onclick="setColor('price','#b91c1c',this)"></div>
+                <div class="swatch" style="background:#1d4ed8;" onclick="setColor('price','#1d4ed8',this)"></div>
+                <div class="swatch" style="background:#166534;" onclick="setColor('price','#166534',this)"></div>
+                <div class="swatch" style="background:#ffffff;border:1px solid #555;" onclick="setColor('price','#ffffff',this)"></div>
+                <input type="color" id="cp-price" value="#000000" oninput="updatePreview()" title="Custom" style="width:28px;height:28px;" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Text Colour</label>
+              <div class="swatch-row">
+                <div class="swatch picked" style="background:#222222;" onclick="setColor('text','#222222',this)"></div>
+                <div class="swatch" style="background:#555555;" onclick="setColor('text','#555555',this)"></div>
+                <div class="swatch" style="background:#ffffff;border:1px solid #555;" onclick="setColor('text','#ffffff',this)"></div>
+                <div class="swatch" style="background:#b91c1c;" onclick="setColor('text','#b91c1c',this)"></div>
+                <input type="color" id="cp-text" value="#222222" oninput="updatePreview()" title="Custom" style="width:28px;height:28px;" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Accent / Border</label>
+              <div class="swatch-row">
+                <div class="swatch picked" style="background:#222222;" onclick="setColor('accent','#222222',this)"></div>
+                <div class="swatch" style="background:#b91c1c;" onclick="setColor('accent','#b91c1c',this)"></div>
+                <div class="swatch" style="background:#1d4ed8;" onclick="setColor('accent','#1d4ed8',this)"></div>
+                <div class="swatch" style="background:#aaaaaa;" onclick="setColor('accent','#aaaaaa',this)"></div>
+                <input type="color" id="cp-accent" value="#222222" oninput="updatePreview()" title="Custom" style="width:28px;height:28px;" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Border Style</div>
+          <select id="sel-border" onchange="updatePreview()">
+            <option value="none">No border</option>
+            <option value="solid" selected>Solid line top & bottom</option>
+            <option value="double">Double line</option>
+            <option value="dashed">Dashed</option>
+            <option value="box">Full box border</option>
+          </select>
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Font Style</div>
+          <select id="sel-font" onchange="updatePreview()">
+            <option value="'Courier New', monospace" selected>Courier (Receipt style)</option>
+            <option value="Arial, sans-serif">Arial (Clean)</option>
+            <option value="'Times New Roman', serif">Times New Roman (Formal)</option>
+            <option value="Georgia, serif">Georgia (Elegant)</option>
+            <option value="Impact, sans-serif">Impact (Bold)</option>
+          </select>
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-section-title">Price Prefix</div>
+          <div class="row2">
+            <div class="field">
+              <label>Symbol before price</label>
+              <input type="text" id="inp-prefix" value="$" oninput="updatePreview()" maxlength="4" />
+            </div>
+            <div class="field">
+              <label>Currency label</label>
+              <input type="text" id="inp-currency" value="AUD" oninput="updatePreview()" maxlength="6" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="design-preview-wrap">
+      <div class="design-preview-label">Live Preview</div>
+      <div class="tag-preview-outer">
+        <div class="tag-preview-container">
+          <div id="tag-preview"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;">Actual print size may vary by printer</div>
+      </div>
+      <div style="margin-top:16px;" class="btn-row" style="justify-content:center;">
+        <button class="btn btn-primary" style="width:100%;" onclick="showPage('print')">Use This Design → Print</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PAGE: PRINT ══ -->
+<div class="page" id="page-print">
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">In Queue</div>
+      <div class="stat-val brand" id="pt-queue">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Selected</div>
+      <div class="stat-val success" id="pt-selected">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Print Server</div>
+      <div class="stat-val" id="pt-server-stat" style="font-size:13px;font-weight:700;color:var(--text3);">Checking…</div>
+    </div>
+  </div>
+
+  <!-- Server status card -->
+  <div class="card" id="server-card">
+    <div class="card-title"><span class="dot"></span> Print Server</div>
+    <div id="server-connected" style="display:none;">
+      <div class="alert alert-success" style="margin:0 0 14px;">
+        <span>✅</span>
+        <div>
+          <strong>Print server connected — fully automatic printing!</strong><br/>
+          <span style="font-size:11px;">Each tag sends as its own job. No dialogs. Auto-cut fires on every tag.</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Select Printer / Port</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <select id="printer-select" style="flex:1;" onchange="onPrinterSelect()"></select>
+          <button class="btn btn-sm" onclick="loadPrinters()">↺ Refresh</button>
+        </div>
+        <div id="printer-hint" style="font-size:11px;color:var(--text3);line-height:1.7;"></div>
+      </div>
+
+      <div class="field" style="margin-top:10px;">
+        <label>Or type printer name / IP manually</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="printer-manual" placeholder='e.g.  EPSON TM-T82III  or  USB001  or  192.168.1.100' style="flex:1;font-size:12px;" />
+          <button class="btn btn-sm btn-primary" onclick="testPrint()">Test Print</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Leave blank to use the dropdown above. Manual entry overrides dropdown.</div>
+      </div>
+
+      <div id="test-result" style="font-size:12px;margin-top:8px;font-weight:600;white-space:pre-wrap;word-break:break-word;"></div>
+
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Troubleshoot</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          <strong style="color:var(--text);">Not printing?</strong> Try these in order:<br/>
+          1. Type <code style="background:var(--bg4);padding:1px 5px;border-radius:3px;">USB001</code> in the manual box above → click Test Print<br/>
+          2. Type <code style="background:var(--bg4);padding:1px 5px;border-radius:3px;">USB002</code> if USB001 fails<br/>
+          3. Check the black server window — it shows detailed errors<br/>
+          4. Open <a href="http://localhost:44444/debug" target="_blank" style="color:var(--info);">localhost:44444/debug</a> to verify server is working
+        </div>
+      </div>
+    <div id="server-disconnected">
+      <div class="alert alert-warn" style="margin:0 0 14px;">
+        <span>⚡</span>
+        <div>
+          <strong>Print server not running.</strong><br/>
+          <span style="font-size:11px;">Start it once to enable fully automatic silent printing. Without it, the browser print dialog will appear for each tag.</span>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9;background:var(--bg3);border-radius:var(--radius-sm);padding:14px 16px;border:1px solid var(--border);">
+        <strong style="color:var(--text);display:block;margin-bottom:8px;">How to start the print server (one-time setup):</strong>
+        1. Make sure <strong style="color:var(--info);">Node.js</strong> is installed on this PC
+           <a href="https://nodejs.org" style="color:var(--info);font-size:11px;margin-left:4px;">↗ nodejs.org</a><br/>
+        2. Copy <strong style="color:var(--info);">printer-server.js</strong> to any folder<br/>
+        3. Open <strong>Command Prompt</strong> in that folder and run:<br/>
+        <code style="display:block;background:var(--bg4);padding:8px 12px;border-radius:6px;margin:8px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--success);">node printer-server.js</code>
+        4. Leave that window open — then come back and click Retry below
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="checkServer()">↺ Retry Connection</button>
+      <button class="btn" style="margin-top:12px;margin-left:8px;" onclick="fallbackMode()">Use Browser Print Instead</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Print Queue</div>
+    <div class="btn-row" style="margin-bottom:12px;">
+      <button class="btn btn-sm" onclick="selectAll()">☑ All</button>
+      <button class="btn btn-sm" onclick="deselectAll()">☐ None</button>
+      <button class="btn btn-sm btn-danger" onclick="removeSelected()">Remove selected</button>
+    </div>
+    <div class="q-head">
+      <div class="qh-cb"></div>
+      <div class="qh-name">Product</div>
+      <div class="qh-price">Price</div>
+      <div class="qh-rm"></div>
+    </div>
+    <div class="queue-wrap" id="print-queue-list"></div>
+
+    <div style="margin-top:18px;" class="btn-row">
+      <button class="btn btn-success" id="main-print-btn" onclick="printSelected()">🖨 Print Selected Tags</button>
+      <button class="btn" onclick="showPage('designer')">✏ Edit Tag Design</button>
+      <span id="print-mode-label" style="font-size:11px;color:var(--text3);margin-left:4px;"></span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /layout -->
+
+<!-- PRINT PROGRESS OVERLAY -->
+<div class="print-overlay" id="print-overlay">
+  <div class="print-overlay-box">
+    <div style="font-size:36px;margin-bottom:12px;">🖨</div>
+    <div class="print-overlay-title">Sending print jobs…</div>
+    <div class="print-overlay-sub" id="po-sub">Each tag is sent as a separate print job for auto-cut</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="po-bar"></div>
+    </div>
+    <div class="print-progress-text" id="po-text">0 / 0</div>
+    <button class="print-cancel-btn" id="po-cancel" onclick="cancelPrint()">Cancel</button>
+  </div>
+</div>
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let rawData = [], filteredData = [], queue = [], columns = [];
+let mapping = { name:'', sku:'', barcode:'', barcode2:'', barcode3:'', barcode4:'', price:'', location:'' };
+let currentOutlet = '';
+let searchDebounce = null;
+let ds = {
+  showStore:true, showName:true, showSku:true, showLabel:true, showDate:false, showCut:true,
+  width:76, priceSize:36, nameSize:13,
+  bgColor:'#ffffff', priceColor:'#000000', textColor:'#222222', accentColor:'#222222',
+  border:'solid', font:"'Courier New', monospace",
+  storeName:'Sri Murugan Trading', prefix:'$', currency:'AUD'
+};
+
+// ── Navigation ─────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  const titles = {setup:'Setup — Upload Inventory', scan:'Scan & Queue', designer:'Tag Designer', print:'Print Tags'};
+  document.getElementById('topbar-title').textContent = titles[id] || '';
+  if (id === 'scan' || id === 'print') { updateQueueUI(); updateStats(); }
+  if (id === 'designer') updatePreview();
+  if (id === 'print') { updatePrintPage(); checkServer(); }
+  const sel = queue.filter(q=>q._selected).length;
+  document.getElementById('print-quick-btn').style.display = sel > 0 ? 'inline-flex' : 'none';
+}
+
+// ── File Upload ────────────────────────────────────────────────
+const uz = document.getElementById('upload-zone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('drag'));
+uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+document.getElementById('file-input').addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  if (ext === 'csv') {
+    reader.onload = ev => { parseCSV(ev.target.result); };
+    reader.readAsText(file);
+  } else {
+    reader.onload = ev => {
+      try {
+        const wb = XLSX.read(ev.target.result, { type:'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval:'' });
+        if (!json.length) { setFileSt('File appears empty.', 'err'); return; }
+        rawData = json; columns = Object.keys(json[0]);
+        showMapping();
+      } catch(ex) { setFileSt('Cannot read file: ' + ex.message, 'err'); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) { setFileSt('File is empty.', 'err'); return; }
+  const parseRow = line => {
+    const r=[]; let c='', q=false;
+    for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){q=!q;}else if(ch===','&&!q){r.push(c.trim());c='';}else{c+=ch;}}
+    r.push(c.trim()); return r;
+  };
+  const hdrs = parseRow(lines[0]);
+  rawData = lines.slice(1).filter(l=>l.trim()).map(line=>{
+    const vals=parseRow(line), obj={};
+    hdrs.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim();});
+    return obj;
+  });
+  columns = hdrs;
+  showMapping();
+}
+
+function setFileSt(msg, type) {
+  const el = document.getElementById('file-status');
+  el.textContent = msg; el.className = 'fb fb-' + type;
+}
+
+function showMapping() {
+  setFileSt('✓ ' + rawData.length + ' rows loaded. Check column mapping below.', 'ok');
+  setStep(2);
+  ['col-name','col-sku','col-barcode','col-barcode2','col-barcode3','col-barcode4','col-price','col-location'].forEach(id => {
+    const sel = document.getElementById(id);
+    const isOpt = ['col-barcode2','col-barcode3','col-barcode4','col-location'].includes(id);
+    sel.innerHTML = isOpt ? '<option value="">— Not in file —</option>' : '<option value="">— Select —</option>';
+    columns.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    const lc = columns.map(c=>c.toLowerCase());
+    if (id==='col-name')     autoSel(sel,lc,['product name','name','product','item','description']);
+    if (id==='col-sku')      autoSel(sel,lc,['sku','item code','product code','code','style code']);
+    if (id==='col-barcode')  autoSel(sel,lc,['barcode','barcode 1','barcode1','ean','upc','barcode/sku']);
+    if (id==='col-barcode2') autoSel(sel,lc,['barcode 2','barcode2','ean2','upc2','alternate barcode']);
+    if (id==='col-barcode3') autoSel(sel,lc,['barcode 3','barcode3','ean3','upc3']);
+    if (id==='col-barcode4') autoSel(sel,lc,['barcode 4','barcode4','ean4','upc4']);
+    if (id==='col-price')    autoSel(sel,lc,['sell price','retail price','price tier 1','selling price','price','sale price','unit price','retail']);
+    if (id==='col-location') autoSelLoc(sel,lc,['outlet','location','store','branch','warehouse','site']);
+  });
+  document.getElementById('card-mapping').style.display = 'block';
+}
+
+function autoSel(sel, lc, kws) {
+  for(const kw of kws){const i=lc.findIndex(c=>c.includes(kw));if(i>=0){sel.selectedIndex=i+1;return;}}
+}
+function autoSelLoc(sel, lc, kws) {
+  for(const kw of kws){const i=lc.findIndex(c=>c.includes(kw));if(i>=0){sel.selectedIndex=i+1;return;}}
+}
+
+function confirmMapping() {
+  mapping.name     = document.getElementById('col-name').value;
+  mapping.sku      = document.getElementById('col-sku').value;
+  mapping.barcode  = document.getElementById('col-barcode').value;
+  mapping.barcode2 = document.getElementById('col-barcode2').value;
+  mapping.barcode3 = document.getElementById('col-barcode3').value;
+  mapping.barcode4 = document.getElementById('col-barcode4').value;
+  mapping.price    = document.getElementById('col-price').value;
+  mapping.location = document.getElementById('col-location').value;
+  if (!mapping.name || (!mapping.sku && !mapping.barcode) || !mapping.price) {
+    document.getElementById('map-status').textContent='⚠ Please select Name, SKU (or Barcode), and Price columns.';
+    document.getElementById('map-status').className='fb fb-err'; return;
+  }
+  if (mapping.location) {
+    const outlets = [...new Set(rawData.map(r=>String(r[mapping.location]||'')).filter(Boolean))].sort();
+    const sel = document.getElementById('outlet-select');
+    sel.innerHTML = '<option value="">— All locations —</option>';
+    outlets.forEach(o=>{const opt=document.createElement('option');opt.value=o;opt.textContent=o;sel.appendChild(opt);});
+    document.getElementById('card-outlet').style.display = 'block';
+    filterByOutlet();
+    setStep(3);
+  } else {
+    filteredData = rawData;
+    setStep(4);
+    showReady();
+  }
+}
+
+function filterByOutlet() {
+  const outlet = document.getElementById('outlet-select').value;
+  currentOutlet = outlet;
+  filteredData = outlet ? rawData.filter(r=>String(r[mapping.location]||'')===outlet) : rawData;
+  document.getElementById('outlet-info').textContent = '✓ ' + filteredData.length + ' products for this location.';
+  setStep(4);
+  showReady();
+}
+
+function showReady() {
+  const outlet = currentOutlet || 'All locations';
+  document.getElementById('ready-info').textContent =
+    filteredData.length + ' products loaded · Outlet: ' + outlet;
+  document.getElementById('card-ready').style.display = 'block';
+  document.getElementById('topbar-status').textContent = filteredData.length + ' products loaded';
+  document.getElementById('st-loaded').textContent = filteredData.length;
+  document.getElementById('st-loaded').textContent = filteredData.length;
+  updateStats();
+}
+
+function setStep(n) {
+  for(let i=1;i<=4;i++){
+    const s = document.getElementById('s'+i);
+    s.className = 'step' + (i < n ? ' done' : i===n ? ' active' : '');
+    if(i<4){const l=document.getElementById('sl'+i);l.className='step-line'+(i<n?' done':'');}
+  }
+}
+
+// ── Search / Scan ──────────────────────────────────────────────
+function findProducts(q) {
+  const ql = q.trim().toLowerCase();
+  if (!ql) return [];
+  return filteredData.filter(r => {
+    const nm  = String(r[mapping.name]    || '').toLowerCase();
+    const sku = String(r[mapping.sku]     || '').toLowerCase();
+    const bc1 = String(r[mapping.barcode] || '').toLowerCase();
+    const bc2 = mapping.barcode2 ? String(r[mapping.barcode2] || '').toLowerCase() : '';
+    const bc3 = mapping.barcode3 ? String(r[mapping.barcode3] || '').toLowerCase() : '';
+    const bc4 = mapping.barcode4 ? String(r[mapping.barcode4] || '').toLowerCase() : '';
+    // Exact match on any barcode or SKU (for scanner)
+    if (sku===ql || bc1===ql || bc2===ql || bc3===ql || bc4===ql) return true;
+    // Partial match on name or SKU (for keyboard search)
+    if (nm.includes(ql) || sku.includes(ql)) return true;
+    // Partial match on any barcode
+    if (bc1.includes(ql) || bc2.includes(ql) || bc3.includes(ql) || bc4.includes(ql)) return true;
+    return false;
+  });
+}
+
+function onScanInput() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(()=>{
+    const val = document.getElementById('scan-input').value.trim();
+    const el = document.getElementById('search-results');
+    if (!val){el.style.display='none';clearFb();return;}
+    const res = findProducts(val);
+    if (!res.length){el.style.display='none';return;}
+    renderSR(res); el.style.display='block';
+  }, 180);
+}
+
+function onScanKey(e) {
+  if (e.key!=='Enter') return;
+  const val = document.getElementById('scan-input').value.trim();
+  if (!val) return;
+  if (!filteredData.length){setFb('⚠ Load inventory first (Setup tab).','warn');return;}
+  const res = findProducts(val);
+  if (res.length===1) { doAdd(res[0]); }
+  else if (res.length>1) { renderSR(res); document.getElementById('search-results').style.display='block'; setFb(res.length+' matches — select one below','info'); }
+  else { setFb('✗ No product found for: '+val,'err'); }
+}
+function addBySearch(){ onScanKey({key:'Enter'}); }
+
+function renderSR(results) {
+  const el = document.getElementById('search-results');
+  el.innerHTML = results.slice(0,10).map(r => {
+    const sku = mapping.sku ? esc(r[mapping.sku]) : '';
+    const bc  = mapping.barcode ? esc(r[mapping.barcode]) : '';
+    const loc = mapping.location && r[mapping.location] ? ' · ' + esc(r[mapping.location]) : '';
+    const sub = [sku ? 'SKU: ' + sku : '', bc ? 'BC: ' + bc : ''].filter(Boolean).join('  ·  ') + loc;
+    return `
+    <div class="sr-item" onclick="selectSR('${esc(r[mapping.sku] || r[mapping.barcode])}')">
+      <div>
+        <div class="sr-name">${esc(r[mapping.name])}</div>
+        <div class="sr-sku">${sub}</div>
+      </div>
+      <div class="sr-price">${ds.prefix}${fmtP(r[mapping.price])}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectSR(key) {
+  const p = filteredData.find(r =>
+    String(r[mapping.sku] || r[mapping.barcode]) === key
+  );
+  if (p) doAdd(p);
+  document.getElementById('scan-input').focus();
+}
+
+function doAdd(product) {
+  const key = String(product[mapping.sku] || product[mapping.barcode] || '');
+  if (queue.find(q => String(q[mapping.sku] || q[mapping.barcode]) === key)) {
+    setFb('Already in queue: ' + product[mapping.name], 'warn'); return;
+  }
+  queue.push({...product, _selected:true});
+  clearInput(); setFb('✓ Added: ' + product[mapping.name], 'ok');
+  setTimeout(clearFb, 2000);
+  updateQueueUI(); updateStats();
+  document.getElementById('nb-queue').textContent = queue.length;
+  const sel = queue.filter(q=>q._selected).length;
+  document.getElementById('print-quick-btn').style.display = sel > 0 ? 'inline-flex' : 'none';
+}
+
+// ── Queue ──────────────────────────────────────────────────────
+function updateQueueUI() {
+  ['queue-list','print-queue-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!queue.length) { el.innerHTML='<div class="empty-q">No products added yet</div>'; return; }
+    el.innerHTML = queue.map((item,i)=>`
+      <div class="q-item">
+        <div class="q-cb"><input type="checkbox" ${item._selected?'checked':''} onchange="toggleItem(${i},this.checked)" /></div>
+        <div class="q-name">
+          <div class="n">${esc(item[mapping.name])}</div>
+          <div class="s">${mapping.sku ? esc(item[mapping.sku]) : esc(item[mapping.barcode])}</div>
+        </div>
+        <div class="q-price">${ds.prefix}${fmtP(item[mapping.price])}</div>
+        <div class="q-rm"><button class="rm-btn" onclick="removeItem(${i})" title="Remove">×</button></div>
+      </div>`).join('');
+  });
+  document.getElementById('nb-queue').textContent = queue.length;
+  updateStats();
+}
+
+function updateStats() {
+  const sel = queue.filter(q=>q._selected).length;
+  document.getElementById('st-queue').textContent = queue.length;
+  document.getElementById('st-selected').textContent = sel;
+  if(document.getElementById('pt-queue')) document.getElementById('pt-queue').textContent = queue.length;
+  if(document.getElementById('pt-selected')) document.getElementById('pt-selected').textContent = sel;
+}
+
+function updatePrintPage() {
+  updateQueueUI(); updateStats();
+  document.getElementById('pt-outlet').textContent = currentOutlet || 'All';
+}
+
+function toggleItem(i,v){ queue[i]._selected=v; updateQueueUI(); updateStats(); }
+function removeItem(i){ queue.splice(i,1); updateQueueUI(); updateStats(); document.getElementById('nb-queue').textContent=queue.length; }
+function selectAll(){ queue.forEach(q=>q._selected=true); updateQueueUI(); updateStats(); }
+function deselectAll(){ queue.forEach(q=>q._selected=false); updateQueueUI(); updateStats(); }
+function removeSelected(){ queue=queue.filter(q=>!q._selected); updateQueueUI(); updateStats(); document.getElementById('nb-queue').textContent=queue.length; }
+function clearQueue(){ if(queue.length&&confirm('Clear all items?')){ queue=[]; updateQueueUI(); updateStats(); document.getElementById('nb-queue').textContent=0; } }
+
+// ── Designer ───────────────────────────────────────────────────
+function toggleOpt(key){
+  const map={store:'showStore',name:'showName',sku:'showSku',label:'showLabel',date:'showDate',cut:'showCut'};
+  ds[map[key]]=!ds[map[key]];
+  const tog=document.getElementById('tog-'+key);
+  tog.classList.toggle('on',ds[map[key]]);
+  updatePreview();
+}
+
+function setColor(key, val, el) {
+  const map={bg:'bgColor',price:'priceColor',text:'textColor',accent:'accentColor'};
+  const cp={bg:'cp-bg',price:'cp-price',text:'cp-text',accent:'cp-accent'};
+  ds[map[key]]=val;
+  document.getElementById(cp[key]).value=val;
+  // update swatch picked
+  const parent = el.parentElement;
+  parent.querySelectorAll('.swatch').forEach(s=>s.classList.remove('picked'));
+  el.classList.add('picked');
+  updatePreview();
+}
+
+function applyTemplate(name) {
+  document.querySelectorAll('.tpill').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  const tpls = {
+    classic: {bgColor:'#ffffff',priceColor:'#000000',textColor:'#222222',accentColor:'#333333',border:'solid',font:"'Courier New', monospace",priceSize:36,nameSize:13},
+    bold:    {bgColor:'#ffffff',priceColor:'#b91c1c',textColor:'#111111',accentColor:'#b91c1c',border:'double',font:"Impact, sans-serif",priceSize:44,nameSize:14},
+    minimal: {bgColor:'#fafafa',priceColor:'#111111',textColor:'#555555',accentColor:'#cccccc',border:'none',font:"Arial, sans-serif",priceSize:32,nameSize:12},
+    dark:    {bgColor:'#1a1a1a',priceColor:'#ffffff',textColor:'#cccccc',accentColor:'#555555',border:'solid',font:"'Courier New', monospace",priceSize:36,nameSize:13},
+    elegant: {bgColor:'#fff8f0',priceColor:'#7c3a0a',textColor:'#3a2000',accentColor:'#c0803a',border:'box',font:"Georgia, serif",priceSize:34,nameSize:13},
+  };
+  Object.assign(ds, tpls[name]);
+  // sync sliders & inputs
+  document.getElementById('sl-price-size').value = ds.priceSize;
+  
+  document.getElementById('sl-name-size').value = ds.nameSize;
+  
+  document.getElementById('cp-bg').value = ds.bgColor;
+  document.getElementById('cp-price').value = ds.priceColor;
+  document.getElementById('cp-text').value = ds.textColor;
+  document.getElementById('cp-accent').value = ds.accentColor;
+  document.getElementById('sel-border').value = ds.border;
+  document.getElementById('sel-font').value = ds.font;
+  updatePreview();
+}
+
+function updatePreview() {
+  // sync all controls to ds
+  ds.width = parseInt(document.getElementById('sl-width').value);
+  document.getElementById('sv-width').textContent = ds.width;
+  ds.priceSize = parseInt(document.getElementById('sl-price-size').value) || ds.priceSize;
+  
+  ds.nameSize = parseInt(document.getElementById('sl-name-size').value) || ds.nameSize;
+  
+  ds.storeName = document.getElementById('inp-store').value;
+  ds.prefix = document.getElementById('inp-prefix').value;
+  ds.currency = document.getElementById('inp-currency').value;
+  ds.bgColor = document.getElementById('cp-bg').value;
+  ds.priceColor = document.getElementById('cp-price').value;
+  ds.textColor = document.getElementById('cp-text').value;
+  ds.accentColor = document.getElementById('cp-accent').value;
+  ds.border = document.getElementById('sel-border').value;
+  ds.font = document.getElementById('sel-font').value;
+
+  const sampleName = 'Product Name Example';
+  const sampleSku = 'SKU-12345';
+  const samplePrice = '29.99';
+  const html = buildTag({
+    name: sampleName, sku: sampleSku, price: samplePrice, isPreview: true
+  });
+  document.getElementById('tag-preview').innerHTML = html;
+}
+
+function buildTag({name, sku, price, isPreview}) {
+  const w = ds.width;
+  const pxW = isPreview ? '100%' : (w + 'mm');
+  const pad = isPreview ? '12px 14px' : '4mm 5mm 3mm';
+  const borderStyle = (() => {
+    if (ds.border==='none') return '';
+    if (ds.border==='box') return `border: 1.5pt solid ${ds.accentColor};`;
+    if (ds.border==='double') return `border-top: 3pt double ${ds.accentColor}; border-bottom: 3pt double ${ds.accentColor};`;
+    if (ds.border==='dashed') return `border-top: 1pt dashed ${ds.accentColor}; border-bottom: 1pt dashed ${ds.accentColor};`;
+    return `border-top: 1.5pt solid ${ds.accentColor}; border-bottom: 1.5pt solid ${ds.accentColor};`;
+  })();
+  const divider = ds.border!=='none'
+    ? `<div style="border-top: 1pt solid ${ds.accentColor}; margin: 4px 0;"></div>`
+    : `<div style="margin:4px 0;"></div>`;
+
+  return `<div style="
+    width:${pxW}; padding:${pad}; box-sizing:border-box;
+    background:${ds.bgColor}; font-family:${ds.font};
+    color:${ds.textColor}; ${borderStyle}
+  ">
+    ${ds.showStore ? `<div style="font-size:${isPreview?9:7}pt; text-transform:uppercase; letter-spacing:1px; color:${ds.textColor}; opacity:0.7;">${esc(ds.storeName)}</div>${divider}` : ''}
+    ${ds.showName ? `<div style="font-size:${isPreview?Math.max(ds.nameSize-1,10):ds.nameSize}pt; font-weight:bold; line-height:1.3; word-break:break-word; color:${ds.textColor};">${esc(name)}</div>` : ''}
+    ${ds.showLabel ? `<div style="font-size:${isPreview?8:7}pt; color:${ds.textColor}; opacity:0.6; margin-top:4px;">PRICE (${esc(ds.currency)})</div>` : ''}
+    <div style="font-size:${isPreview?Math.min(ds.priceSize,40):ds.priceSize}pt; font-weight:bold; color:${ds.priceColor}; line-height:1.1; margin: 2px 0 4px;">${esc(ds.prefix)}${price}</div>
+    ${ds.showSku ? `<div style="font-size:${isPreview?8:7}pt; color:${ds.textColor}; opacity:0.55; font-family:'Courier New',monospace;">SKU: ${esc(sku)}</div>` : ''}
+    ${ds.showDate ? `<div style="font-size:${isPreview?8:7}pt; color:${ds.textColor}; opacity:0.45; margin-top:2px;">${new Date().toLocaleDateString('en-AU')}</div>` : ''}
+    ${ds.showCut ? `<div style="border-top:1pt dashed ${ds.accentColor}; margin: 4px 0 1px; opacity:0.4;"></div><div style="font-size:6pt; text-align:center; color:${ds.textColor}; opacity:0.35; letter-spacing:2px;">CUT</div>` : ''}
+  </div>`;
+}
+
+// ── Print Server ────────────────────────────────────────────────
+const SERVER = 'http://localhost:44444';
+let serverOnline = false;
+let useFallback = false;
+let printCancelled = false;
+
+function fallbackMode() {
+  useFallback = true;
+  serverOnline = false;
+  document.getElementById('server-disconnected').style.display = 'none';
+  document.getElementById('server-connected').style.display = 'none';
+  document.getElementById('pt-server-stat').textContent = 'Browser mode';
+  document.getElementById('pt-server-stat').style.color = 'var(--warn)';
+  document.getElementById('print-mode-label').textContent = '(browser print dialog will appear per tag)';
+}
+
+async function checkServer() {
+  document.getElementById('pt-server-stat').textContent = 'Checking…';
+  document.getElementById('pt-server-stat').style.color = 'var(--text3)';
+  try {
+    const r = await fetch(SERVER + '/status', { signal: AbortSignal.timeout(1500) });
+    const d = await r.json();
+    if (d.ok) {
+      serverOnline = true; useFallback = false;
+      document.getElementById('server-connected').style.display = 'block';
+      document.getElementById('server-disconnected').style.display = 'none';
+      document.getElementById('pt-server-stat').textContent = '● Online';
+      document.getElementById('pt-server-stat').style.color = 'var(--success)';
+      document.getElementById('print-mode-label').textContent = '(silent — no dialogs)';
+      loadPrinters();
+    }
+  } catch(e) {
+    serverOnline = false;
+    document.getElementById('server-connected').style.display = 'none';
+    document.getElementById('server-disconnected').style.display = 'block';
+    document.getElementById('pt-server-stat').textContent = '● Offline';
+    document.getElementById('pt-server-stat').style.color = 'var(--danger)';
+    if (!useFallback) document.getElementById('print-mode-label').textContent = '(start server for silent print)';
+  }
+}
+
+async function loadPrinters() {
+  try {
+    const r = await fetch(SERVER + '/printers', { signal: AbortSignal.timeout(4000) });
+    const d = await r.json();
+    const sel = document.getElementById('printer-select');
+    sel.innerHTML = '<option value="">— Choose from list —</option>';
+
+    // Add named printers
+    const printers = d.printers || [];
+    if (printers.length) {
+      const grp = document.createElement('optgroup');
+      grp.label = 'Windows Printers';
+      printers.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.name;
+        o.textContent = p.name + (p.port ? '  [' + p.port + ']' : '');
+        if (p.isEpson) { o.textContent += '  ★ Epson'; o.selected = true; }
+        grp.appendChild(o);
+      });
+      sel.appendChild(grp);
+    }
+
+    // Add direct ports
+    const ports = d.ports || [];
+    if (ports.length) {
+      const grp2 = document.createElement('optgroup');
+      grp2.label = 'Direct USB/COM Ports';
+      ports.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p; o.textContent = p;
+        grp2.appendChild(o);
+      });
+      sel.appendChild(grp2);
+    }
+
+    onPrinterSelect();
+  } catch(e) {}
+}
+
+function onPrinterSelect() {
+  const sel = document.getElementById('printer-select');
+  const hint = document.getElementById('printer-hint');
+  const val = sel.value;
+  if (!val) { hint.textContent = ''; return; }
+  if (/^USB\d+$/i.test(val)) {
+    hint.textContent = '⚡ Direct USB port — fastest method. Works if your Epson is connected via USB.';
+  } else if (/^COM\d+$/i.test(val)) {
+    hint.textContent = '⚡ Direct serial/COM port.';
+  } else if (/epson|tm-t|tm-m/i.test(val)) {
+    hint.textContent = '✓ Epson printer detected. This will send raw ESC/POS commands directly.';
+  } else if (/^\d+\.\d+/.test(val)) {
+    hint.textContent = '🌐 Network printer via TCP/IP on port 9100.';
+  } else {
+    hint.textContent = 'Windows named printer — will use winspool raw printing.';
+  }
+}
+
+function getActivePrinter() {
+  const manual = (document.getElementById('printer-manual')?.value || '').trim();
+  if (manual) return manual;
+  return document.getElementById('printer-select')?.value || '';
+}
+
+async function testPrint() {
+  const printer = getActivePrinter();
+  const resultEl = document.getElementById('test-result');
+  resultEl.style.color = 'var(--info)';
+  resultEl.textContent = 'Sending test tag…';
+  try {
+    const r = await fetch(SERVER + '/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        printer,
+        tag: {
+          name: 'TEST PRODUCT', sku: 'TEST-001', price: '9.99',
+          showStore: true, storeName: ds.storeName || 'Sri Murugan Trading',
+          showName: true, showSku: true, showLabel: true,
+          showDate: false, showCut: true, prefix: '$', currency: 'AUD'
+        }
+      }),
+      signal: AbortSignal.timeout(8000)
+    });
+    const d = await r.json();
+    if (d.ok) {
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = '✓ Test tag sent! Method: ' + d.method + '\nCheck if it printed on your Epson.';
+    } else {
+      resultEl.style.color = 'var(--danger)';
+      resultEl.textContent = '✗ Error:\n' + d.error;
+    }
+  } catch(e) {
+    resultEl.style.color = 'var(--danger)';
+    resultEl.textContent = '✗ Could not reach server: ' + e.message;
+  }
+}
+
+function cancelPrint() {
+  printCancelled = true;
+  document.getElementById('print-overlay').classList.remove('show');
+  document.getElementById('print-area').innerHTML = '';
+}
+
+function syncDesignSettings() {
+  // Pull all designer values into ds — works even if user never visited the Designer tab
+  const g = (id, fallback) => { const el = document.getElementById(id); return el ? el.value : fallback; };
+  ds.width      = parseInt(g("sl-width", ds.width)) || ds.width;
+  ds.priceSize  = parseInt(g("sl-price-size", ds.priceSize)) || ds.priceSize;
+  ds.nameSize   = parseInt(g("sl-name-size", ds.nameSize)) || ds.nameSize;
+  ds.storeName  = g("inp-store", ds.storeName) || ds.storeName;
+  ds.prefix     = g("inp-prefix", ds.prefix);
+  ds.currency   = g("inp-currency", ds.currency);
+  ds.bgColor    = g("cp-bg", ds.bgColor);
+  ds.priceColor = g("cp-price", ds.priceColor);
+  ds.textColor  = g("cp-text", ds.textColor);
+  ds.accentColor= g("cp-accent", ds.accentColor);
+  ds.border     = g("sel-border", ds.border);
+  ds.font       = g("sel-font", ds.font);
+  // toggles
+  const tog = (id, key) => { const el=document.getElementById(id); if(el) ds[key]=el.classList.contains("on"); };
+  tog("tog-store","showStore"); tog("tog-name","showName"); tog("tog-sku","showSku");
+  tog("tog-label","showLabel"); tog("tog-date","showDate"); tog("tog-cut","showCut");
+}
+
+async function printSelected() {
+  // Always sync ds from designer inputs before printing
+  syncDesignSettings();
+  const toPrint = queue.filter(q => q._selected);
+  if (!toPrint.length) { alert('No items selected.'); return; }
+
+  printCancelled = false;
+  const total = toPrint.length;
+  const overlay = document.getElementById('print-overlay');
+  const bar = document.getElementById('po-bar');
+  const txt = document.getElementById('po-text');
+  const sub = document.getElementById('po-sub');
+  const area = document.getElementById('print-area');
+
+  overlay.classList.add('show');
+  bar.style.width = '0%';
+  txt.textContent = '0 / ' + total;
+
+  if (serverOnline && !useFallback) {
+    // ── SILENT MODE via print server ──
+    sub.textContent = `Sending ${total} job${total>1?'s':''} silently — no dialogs, auto-cut on every tag`;
+    const printer = getActivePrinter();
+
+    for (let i = 0; i < toPrint.length; i++) {
+      if (printCancelled) break;
+      const item = toPrint[i];
+      const tagData = {
+        name: item[mapping.name],
+        sku: mapping.sku ? item[mapping.sku] : item[mapping.barcode],
+        price: fmtP(item[mapping.price]),
+        showStore: ds.showStore, storeName: ds.storeName,
+        showName: ds.showName, showSku: ds.showSku,
+        showLabel: ds.showLabel, showDate: ds.showDate,
+        showCut: ds.showCut, prefix: ds.prefix, currency: ds.currency,
+        priceSize: ds.priceSize, nameSize: ds.nameSize, border: ds.border,
+        tagWidth: ds.width
+      };
+      try {
+        await fetch(SERVER + '/print', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: tagData, printer }),
+          signal: AbortSignal.timeout(5000)
+        });
+      } catch(e) {
+        console.warn('Print job failed for ' + tagData.name, e.message);
+      }
+      bar.style.width = (((i + 1) / total) * 100) + '%';
+      txt.textContent = (i + 1) + ' / ' + total;
+      // Small gap between jobs so printer can breathe
+      if (i < toPrint.length - 1) await new Promise(r => setTimeout(r, 120));
+    }
+
+  } else {
+    // ── FALLBACK: browser print dialog per tag ──
+    sub.textContent = `Sending ${total} browser print job${total>1?'s':''} — click Print in each dialog`;
+    for (let i = 0; i < toPrint.length; i++) {
+      if (printCancelled) break;
+      const item = toPrint[i];
+      area.innerHTML = `<div style="width:${ds.width}mm;">
+        ${buildTag({name:item[mapping.name], sku:mapping.sku ? item[mapping.sku] : item[mapping.barcode], price:fmtP(item[mapping.price]), isPreview:false})}
+      </div>`;
+      bar.style.width = (((i + 1) / total) * 100) + '%';
+      txt.textContent = (i + 1) + ' / ' + total;
+      await new Promise(r => setTimeout(r, 80));
+      if (printCancelled) break;
+      window.print();
+      await new Promise(r => setTimeout(r, 350));
+    }
+    area.innerHTML = '';
+  }
+
+  bar.style.width = '100%';
+  txt.textContent = printCancelled ? 'Cancelled' : total + ' / ' + total + ' ✓ Done!';
+  await new Promise(r => setTimeout(r, 1000));
+  overlay.classList.remove('show');
+}
+
+// Check server on page load and when navigating to print tab
+checkServer();
+setInterval(checkServer, 8000); // re-check every 8s
+
+// ── Helpers ────────────────────────────────────────────────────
+function fmtP(val){const n=parseFloat(String(val).replace(/[^0-9.]/g,''));return isNaN(n)?String(val||'0.00'):n.toFixed(2);}
+function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function setFb(msg,type){const e=document.getElementById('scan-feedback');e.textContent=msg;e.className='fb fb-'+type;}
+function clearFb(){setFb('','');}
+function clearInput(){
+  document.getElementById('scan-input').value='';
+  const el=document.getElementById('search-results');
+  el.style.display='none'; el.innerHTML='';
+}
+
+// ── Size dropdown handlers ────────────────────────────────────────────────
+const priceSizeHints = {
+  '24': 'Normal bold — small but clear',
+  '30': '2x wide bold — medium size',
+  '36': '2x wide + 2x tall — clear and readable',
+  '48': '4x wide + 4x tall — very large price'
+};
+const nameSizeHints = {
+  '11': 'Normal text — compact',
+  '13': 'Bold — stands out clearly',
+  '16': 'Bold + 2x tall — large name',
+  '19': 'Bold + 2x wide+tall — very large name'
+};
+
+function onPriceSizeChange() {
+  const v = document.getElementById('sl-price-size').value;
+  ds.priceSize = parseInt(v);
+  const hint = document.getElementById('price-size-hint');
+  if (hint) hint.textContent = priceSizeHints[v] || '';
+  updatePreview();
+}
+
+function onNameSizeChange() {
+  const v = document.getElementById('sl-name-size').value;
+  ds.nameSize = parseInt(v);
+  const hint = document.getElementById('name-size-hint');
+  if (hint) hint.textContent = nameSizeHints[v] || '';
+  updatePreview();
+}
+
+// Init
+updatePreview();
+</script>
+</body>
+</html>
